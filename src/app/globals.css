@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --background: #ffffff;
@@ -23,4 +26,48 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer base {
+  /* Default to Light Mode (Blueprint aesthetic) */
+  :root {
+    --bg-main: #f8fafc; /* slate-50 */
+    --text-main: #0f172a; /* slate-900 */
+    --accent-glow: rgba(59, 130, 246, 0.5); /* blue-500 glow */
+  }
+
+  /* Dark Mode (Neon aesthetic) */
+  .dark {
+    --bg-main: #0F111A;
+    --text-main: #e2e8f0; /* slate-200 */
+    --accent-glow: rgba(34, 211, 238, 0.6); /* cyan-400 glow */
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    transition: background-color 0.5s ease, color 0.5s ease;
+  }
+}
+
+/* Premium Minimalist Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1; /* slate-300 for light mode */
+  border-radius: 10px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155; /* slate-700 for dark mode */
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
 }
