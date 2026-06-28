@@ -1,99 +1,90 @@
+// Let the browser know that this component run in the browser
+
 "use client";
 
+// useState stores changing data
+// useEffect runs code after rendering
+// useMemo caches expensive calculations
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import DualDomainVisualizer from "./DualDomainVisualizer";
 import { Sun, Moon, ArrowLeft } from "lucide-react"; 
-import { getGoldenLesson } from "@/lib/golden-lesson"; // Importing your masterpiece!
+import { getGoldenLesson } from "@/lib/lesson/golden-lesson"; // Importing your masterpiece!
+import { LessonPayload } from "@/lib/schema/lesson";
+
+// lessonData and onReset are react props: read-only configuration objects used to pass data from a parent component down to a child component
+
+// parameters are equivalent to typing:
+// function LessonLayout(props) {
+//     const lessonData = props.lessonData;
+//     const onReset = props.onReset;
+// }
 
 export default function LessonLayout({ 
-  lessonData, 
-  onReset 
+  lessonData, // lesson that another component already has
+  onReset // when something is triggered, called whatever function the parent gives
 }: { 
   lessonData: { 
     topic: string; 
-    function?: string; // <--- 1. ADD THIS LINE
-    textContent?: { [key: string]: string }; 
+    function?: string; 
+    textContent?: LessonPayload; 
   } | null; 
   onReset: () => void;
 }) {
-  const [activeStep, setActiveStep] = useState(0);
-  const [isDarkMode, setIsDarkMode] = useState(true);
+
+  // Lesson hierachy:
+  // LessonPayload
+  //       │
+  //       ▼
+  // LessonLayout
+  //       │
+  //       ├── Keeps track of state
+  //       ├── Chooses the current lesson step
+  //       ├── Renders the narrative
+  //       └── Sends the current visualization to DualDomainVisualizer
+
+  // useState is a special persistent variable
+  // [variable, function (automatically created by react)] = useState(initialising variable)
+  const [activeStep, setActiveStep] = useState(0); // the first time this component render's initialize to 0.
+  const [isDarkMode, setIsDarkMode] = useState(true); // means initially darkmode is true
   
   // Use the topic passed from the Dropzone Landing Page
    const [globalFunc, setGlobalFunc] = useState(lessonData?.function || "sin(3t) + cos(t)");
 
+   // additional function
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
     if (!isDarkMode) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
   };
 
+  // second argument to useEffect is dependency array - react asks if value inside the array changes or not before executing the function
+  // first argument is the function that react executes
+  // second argument tells react when to execute it, empty dependency array means this effect depends on nothing
   useEffect(() => {
     document.documentElement.classList.add('dark');
   }, []);
 
-  // DYNAMIC MATH PARSER
-  const parsedData = useMemo(() => {
-    let clean = globalFunc.toLowerCase().replace(/\s+/g, '').replace(/cost/g, 'cos(t)').replace(/sint/g, 'sin(t)');
-    let rawTerms = clean.match(/[+-]?[^+-]+/g) || [];
-    let fractions = [];
-    let poles =[];
-    
-    for (let term of rawTerms) {
-      let sign = term.startsWith('-') ? '-' : '+';
-      let body = term.replace(/^[+-]/, '');
-
-      let sinM = body.match(/^(?:(\d+(?:\.\d+)?)\*?)?sin\(([+-]?[\d\.]*)t\)$/);
-      if(sinM) {
-         let A = parseFloat(sinM[1] || "1"); let w = parseFloat(sinM[2]||"1");
-         fractions.push({ sign, num: `${A*w}`, den: `s² + ${w*w}`, rawDen: `s² + ${w*w}` });
-         poles.push(`±${w}j`); continue;
-      }
-      let cosM = body.match(/^(?:(\d+(?:\.\d+)?)\*?)?cos\(([+-]?[\d\.]*)t\)$/);
-      if(cosM) {
-         let A = parseFloat(cosM[1] || "1"); let w = parseFloat(cosM[2]||"1");
-         fractions.push({ sign, num: `${A===1?'s':A+'s'}`, den: `s² + ${w*w}`, rawDen: `s² + ${w*w}` });
-         poles.push(`±${w}j`); continue;
-      }
-      let sinhM = body.match(/^(?:(\d+(?:\.\d+)?)\*?)?sinh\(([+-]?[\d\.]*)t\)$/);
-      if(sinhM) {
-         let A = parseFloat(sinhM[1] || "1"); let w = parseFloat(sinhM[2]||"1");
-         fractions.push({ sign, num: `${A*w}`, den: `s² - ${w*w}`, rawDen: `s² - ${w*w}` });
-         poles.push(`±${w}`); continue;
-      }
-      let coshM = body.match(/^(?:(\d+(?:\.\d+)?)\*?)?cosh\(([+-]?[\d\.]*)t\)$/);
-      if(coshM) {
-         let A = parseFloat(coshM[1] || "1"); let w = parseFloat(coshM[2]||"1");
-         fractions.push({ sign, num: `${A===1?'s':A+'s'}`, den: `s² - ${w*w}`, rawDen: `s² - ${w*w}` });
-         poles.push(`±${w}`); continue;
-      }
-      let expM = body.match(/^(?:(\d+(?:\.\d+)?)\*?)?e\^([+-]?[\w\.]*)t$/);
-      if (expM) {
-         let A = expM[1] || "1"; let aStr = expM[2] || "1"; if (aStr==='+') aStr='1'; if (aStr==='-') aStr='-1';
-         let den = aStr.startsWith('-') ? `s + ${aStr.substring(1)}` : `s - ${aStr}`;
-         fractions.push({ sign, num: A, den, rawDen: den });
-         poles.push(aStr); continue;
-      }
-      let cM = body.match(/^(\d+(?:\.\d+)?)$/);
-      if (cM) {
-         fractions.push({ sign, num: cM[1], den: `s`, rawDen: 's' });
-         poles.push("0"); continue;
-      }
-    }
-    if(fractions.length > 0 && fractions[0].sign === '+') fractions[0].sign = '';
-    return { fractions, poles: Array.from(new Set(poles)) }; 
-  }, [globalFunc]);
-
+  // Extract current lesson, lessonData is dependency array so it will change accordingly
 const currentLesson = useMemo(() => {
-    return getGoldenLesson(
-      lessonData?.topic || "Laplace Transform", // 3. CHANGE THIS to pass the English topic
-      parsedData,              // Calculated Math Data
-      isDarkMode,              // Theme State
-      globalFunc,              // The pure math string
-      lessonData?.textContent  // The Text Payload from Supabase!
-    );
-  }, [globalFunc, parsedData, isDarkMode, lessonData]);
+  if (!lessonData?.textContent) return null;
+
+  return getGoldenLesson(
+    lessonData.textContent as LessonPayload
+  );
+}, [lessonData]);
+
+if (!currentLesson) {
+  return (
+    <div className="flex h-screen items-center justify-center">
+      Loading lesson...
+    </div>
+  );
+}
+
+const currentStep =
+  currentLesson.steps[activeStep] ??
+  currentLesson.steps[0];
 
   return (
     <div className={`flex h-screen w-full font-sans overflow-hidden ${isDarkMode ? "dark bg-[#0F111A] text-slate-200" : "bg-white text-slate-800"}`}>
@@ -103,7 +94,7 @@ const currentLesson = useMemo(() => {
         <div className="flex justify-between items-start mb-24">
           
           <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent leading-tight pr-4">
-            {currentLesson.title}
+            {currentLesson?.title}
           </h1>
           
           {/* Top Right Controls */}
@@ -124,8 +115,7 @@ const currentLesson = useMemo(() => {
         </div>
         
         <div className="space-y-[60vh] pb-[50vh]">
-          {/* Explicitly type step to 'any' and index to 'number' to satisfy TypeScript */}
-          {currentLesson.steps.map((step: any, index: number) => (
+          {currentLesson.steps.map((step) => (
             <motion.div 
               key={step.id}
               initial={{ opacity: 0.3 }}
@@ -135,7 +125,7 @@ const currentLesson = useMemo(() => {
               className="text-lg leading-relaxed transition-colors duration-500"
             >
               <div className={`h-10 w-10 rounded-full flex items-center justify-center mb-6 border font-bold ${isDarkMode ? "bg-slate-800 border-slate-700 text-slate-300" : "bg-slate-100 border-slate-300 text-slate-600"}`}>
-                {index + 1}
+                {step.id + 1}
               </div>
               {step.text}
             </motion.div>
@@ -146,10 +136,11 @@ const currentLesson = useMemo(() => {
       {/* RIGHT COLUMN: The Visualizer Engine */}
       <div className={`w-[65%] h-full relative flex items-center justify-center ${isDarkMode ? "bg-[#090a0f]" : "bg-slate-100"}`}>
         <DualDomainVisualizer 
-          currentState={currentLesson.steps[activeStep].ui_state} 
+          currentState={currentStep.ui_state} 
           isDarkMode={isDarkMode} 
           globalFunc={globalFunc}
           setGlobalFunc={setGlobalFunc}
+          callouts={currentStep.callouts}
         />
       </div>
 

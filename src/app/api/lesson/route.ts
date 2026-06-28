@@ -1,7 +1,7 @@
 // src/app/api/lesson/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { getLesson } from "@/lib/lesson-orchestrator";
+import { getLesson } from "@/lib/lesson/lesson-orchestrator";
 
 export async function POST(
   request: NextRequest

@@ -2,7 +2,8 @@
 
 import { createEmbedding } from "@/lib/ai/embedding";
 import { verifyConceptMatch } from "@/lib/ai/verifier";
-import { generateLesson } from "./lesson-generator";
+import { generateLessonMarkdown } from "./lesson-generator";
+import { parseLessonMarkdown } from "./lesson-parser";
 
 import { findSimilarLesson } from "@/lib/ai/vector-search";
 import { saveLesson } from "@/lib/db/cache";
@@ -50,30 +51,65 @@ export async function getLesson(
   //----------------------------------
   // Generate Lesson
   //----------------------------------
-  console.log("🧠 Generating Lesson");
-
-  const lesson = await generateLesson(cleanTopic);
-
   //----------------------------------
-  // Save
-  //----------------------------------
-  await saveLesson({
-    topic: cleanTopic,
-    payload: lesson,
+// Generate Lesson
+//----------------------------------
+console.log("\n🧠 Cache Miss");
+console.log("Generating lesson...");
 
-    // temporary until embeddings wired
-    embedding: `[${embedding.join(",")}]`
-  });
+const markdown =
+  await generateLessonMarkdown(
+    cleanTopic
+  );
 
-  //----------------------------------
-  // Return
-  //----------------------------------
+console.log("\n==============================");
+console.log("🤖 RAW AI OUTPUT");
+console.log("==============================");
+console.log(markdown);
 
-  return {
-    source: "generated",
-    topic: cleanTopic,
-    function:
-      lesson.targetAnchorSymbol,
-    textContent: lesson
-  };
+console.log("\n🧩 Parsing Markdown...");
+
+const lesson =
+  parseLessonMarkdown(
+    markdown
+  );
+
+console.log("✅ Markdown Parsed");
+
+console.log("\n📋 Validating Lesson Schema...");
+
+const payload =
+  LessonPayloadSchema.parse(
+    lesson
+  );
+
+console.log("✅ Schema Validation Passed");
+
+console.log("\n💾 Saving Lesson...");
+
+await saveLesson({
+
+  topic: cleanTopic,
+
+  payload,
+
+  embedding: `[${embedding.join(",")}]`
+
+});
+
+console.log("✅ Lesson Saved");
+
+return {
+
+  source: "generated",
+
+  topic: cleanTopic,
+
+  function:
+    payload.targetAnchorSymbol,
+
+  textContent:
+    payload
+
+};
 }

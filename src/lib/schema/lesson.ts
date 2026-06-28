@@ -1,7 +1,29 @@
 import { z } from "zod";
 
-// Zod is the runtime blueprint that verifies AI-generated JSON actually matches the structure your application expects, 
-// while z.infer<> automatically derives the corresponding TypeScript type so you only define that structure once.
+// ==========================================
+// Visualization Schema
+// ==========================================
+
+export const VisualizerStateSchema = z.object({
+  type: z.enum([
+    "plot",
+    "sandbox",
+    "solver",
+    "diagram",
+    "animation",
+    "simulation",
+    "custom"
+  ]),
+
+  component: z.string(),
+
+  props: z.record(z.string(), z.any()).default({})
+});
+
+// ==========================================
+// Lesson Step Schema
+// ==========================================
+
 export const LessonStepSchema = z.object({
   id: z.number(),
 
@@ -11,7 +33,7 @@ export const LessonStepSchema = z.object({
 
   technicalExplanation: z.string(),
 
-  uiVisualizerInstruction: z.string(),
+  visualizer: VisualizerStateSchema,
 
   callouts: z.array(
     z.object({
@@ -20,6 +42,10 @@ export const LessonStepSchema = z.object({
     })
   )
 });
+
+// ==========================================
+// Lesson Payload Schema
+// ==========================================
 
 export const LessonPayloadSchema = z.object({
   title: z.string(),
@@ -30,6 +56,13 @@ export const LessonPayloadSchema = z.object({
     LessonStepSchema
   ).min(4).max(8)
 });
+
+// ==========================================
+// Types
+// ==========================================
+
+export type VisualizerState =
+  z.infer<typeof VisualizerStateSchema>;
 
 export type LessonPayload =
   z.infer<typeof LessonPayloadSchema>;
