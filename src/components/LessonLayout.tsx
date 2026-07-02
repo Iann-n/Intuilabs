@@ -122,7 +122,7 @@ const currentStep =
               whileInView={{ opacity: 1 }}
               viewport={{ margin: "-50% 0px -50% 0px" }}
               onViewportEnter={() => setActiveStep(step.id)}
-              className="text-lg leading-relaxed transition-colors duration-500"
+              className="text-base leading-relaxed transition-colors duration-500"
             >
               <div className={`h-10 w-10 rounded-full flex items-center justify-center mb-6 border font-bold ${isDarkMode ? "bg-slate-800 border-slate-700 text-slate-300" : "bg-slate-100 border-slate-300 text-slate-600"}`}>
                 {step.id + 1}

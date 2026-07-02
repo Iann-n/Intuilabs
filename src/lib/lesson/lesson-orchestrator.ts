@@ -7,7 +7,7 @@ import { parseLessonMarkdown } from "./lesson-parser";
 
 import { findSimilarLesson } from "@/lib/ai/vector-search";
 import { saveLesson } from "@/lib/db/cache";
-import { LessonPayloadSchema } from "@/lib/schema/lesson";
+import { parseLessonPayload } from "./lesson-migrate";
 
 export async function getLesson(
   topic: string
@@ -35,7 +35,7 @@ export async function getLesson(
     if (verdict.sameConcept &&  verdict.confidence > 0.9) {
       console.log("🔥 Semantic Cache Hit");
 
-      const payload =LessonPayloadSchema.parse(match.lesson_payload);
+      const payload = parseLessonPayload(match.lesson_payload);
       return {
         source: "cache",
         topic: match.topic_query,
@@ -43,7 +43,7 @@ export async function getLesson(
           payload
             .targetAnchorSymbol,
         textContent:
-          match.lesson_payload
+          payload
       };
     }
   }
@@ -79,7 +79,7 @@ console.log("✅ Markdown Parsed");
 console.log("\n📋 Validating Lesson Schema...");
 
 const payload =
-  LessonPayloadSchema.parse(
+  parseLessonPayload(
     lesson
   );
 

@@ -30,7 +30,7 @@ export async function verifyConceptMatch(
   // the validated structured object is placed inside result.output.
   const result = await generateText({
 
-    model: googleInstance("gemini-1.5-flash"),
+    model: googleInstance("gemini-2.5-flash"),
 
     // With Output.object
     // You are telling the SDK:

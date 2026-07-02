@@ -1,5 +1,8 @@
+"use client";
+
 import { LessonPayload, VisualizerState } from "@/lib/schema/lesson";
 import { ReactNode } from "react";
+import LessonText from "@/components/LessonText";
 
 export interface DisplayStep {
   id: number;
@@ -19,11 +22,18 @@ export function getGoldenLesson(
 
       text: (
         <>
-          <h2>{step.title}</h2>
+          <h2 className="text-xl font-semibold text-slate-100 mb-4">
+            {step.title}
+          </h2>
 
-          <p>{step.intuition}</p>
+          <LessonText content={step.intuition} variant="body" />
 
-          <div>{step.technicalExplanation}</div>
+          {step.technicalExplanation.trim().length > 0 && (
+            <LessonText
+              content={step.technicalExplanation}
+              variant="technical"
+            />
+          )}
         </>
       ),
 

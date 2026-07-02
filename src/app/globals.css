@@ -71,3 +71,11 @@ body {
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
+
+/* KaTeX in dark lesson panel */
+.dark .katex {
+  color: #67e8f9;
+}
+.dark .katex-display {
+  margin: 0.75rem 0;
+}

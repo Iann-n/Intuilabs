@@ -112,8 +112,16 @@ function extractVisualizer(section: string) {
   try {
 
     if (rawProps) {
-      props = JSON.parse(rawProps);
-    }
+
+  const cleanedProps = rawProps
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/m, "")
+    .replace(/```$/m, "")
+    .trim();
+
+  props = JSON.parse(cleanedProps);
+
+}
 
   } catch {
 
